@@ -351,6 +351,37 @@ int main(int argc, char **argv) {
     int res = 1;
     int my_optind = 0;
 
+    const char *lang = getenv("LANG");
+    if (lang == NULL)
+    {
+        FILE *f = wfopen(L"/etc/locale.conf", "r");
+        if (f)
+        {
+            bool success = false, has_newline = false;
+            do
+            {
+                char buff[128];
+                const char *name = buff, *value;
+                success = !! fgets(buff, sizeof buff, f);
+                if (success)
+                {
+                    char *newline = strchr(buff, '\n');
+                    if (newline) *newline = '\0';
+                    has_newline = (newline != NULL);
+                    char *sep = strchr(buff, '=');
+                    if (sep)
+                    {
+                        *sep = '\0';
+                        value = sep+1;
+                        setenv(name, value, 0);
+                    }
+                }
+            }
+            while (success && ! has_newline);
+            fclose(f);
+        }
+    }
+
     program_name = L"fish";
     set_main_thread();
     setup_fork_guards();
